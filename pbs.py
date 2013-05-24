@@ -12,9 +12,6 @@
 #   3)  Só existem duas posições para o link da imagem zoom: linha 342 ou 344
 #   4)  Se ocorrer um problema na rede o script pode parar. Você terá que
 #       vigiar e reiniciá-lo a partir de onde parou.
-#   5)  As imagens são JPEG. Boa parte é GIF. Tenho que arrumar esse problema.
-#       Posso olhar o "Content-Type/Content-Disposition" no header ou usar algo
-#       como o `identify`.
 
 __author__ = "Julio Batista Silva"
 __copyright__ = ""
@@ -27,16 +24,19 @@ from datetime import date, timedelta
 ua = "Mozilla/5.0 (X11; Linux x86_64; rv:20.0) Gecko/20100101 Firefox/20.0"
 site = 'http://www.gocomics.com/pearlsbeforeswine/'
 
-d = date(2002, 1, 7) # Data da primeira tirinha
-fim = date.today()   # Data da última tirinha
+d = date(2002, 1, 7)  # Data da primeira tirinha
+fim = date.today()    # Data da última tirinha
 while d <= fim:
     url = site + d.strftime("%Y/%m/%d")
     req = urllib.request.Request(url, headers={'User-Agent': ua})
     data = urllib.request.urlopen(req).read().decode('utf-8').splitlines()
     url = data[344][627:689] if data[344][627:689] != "" else data[342][627:689]
-    nome = d.strftime("%Y_%m_%d") + ".jpg"
     try:
-        urllib.request.urlretrieve(url, nome)
+        u = urllib.request.urlopen(url)
+        ext = u.info().get_filename().split('.')[1]  # Ou get_content_type()
+        nome = d.strftime("%Y_%m_%d") + "." + ext
+        with open(nome, mode='wb') as arquivo:
+            arquivo.write(u.read())
     except:
         print("Erro no arquivo {}".format(nome))
     d += timedelta(1)
